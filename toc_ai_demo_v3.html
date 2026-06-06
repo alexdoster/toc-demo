@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rose City Physicians Group — Analytics Intelligence</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:#1a2744;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #C04828;flex-shrink:0}
+.logo{width:38px;height:38px;border-radius:7px;background:#C04828;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin-right:14px;flex-shrink:0}
+.hdr-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:.02em}
+.hdr-sub{color:#8fa8cc;font-size:11px;margin-top:2px;font-family:-apple-system,sans-serif}
+.pill{color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-family:monospace;flex-shrink:0;background:#888;transition:background .3s}
+.pill.ready{background:#0F6E56}
+.pill.loading{background:#B07A00}
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:270px;background:#fff;border-right:1px solid #e0ddd6;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-head{padding:16px 16px 10px;border-bottom:1px solid #e0ddd6}
+.sb-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#888780;margin-bottom:10px;font-family:-apple-system,sans-serif}
+.cat-btn{display:block;width:100%;text-align:left;padding:8px 11px;margin-bottom:4px;border-radius:6px;border:1px solid #e0ddd6;background:#fafaf8;color:#3d3d3a;font-size:13px;cursor:pointer;font-family:Georgia,serif;transition:all .12s}
+.cat-btn:hover{border-color:#1a2744;color:#1a2744}
+.q-list{padding:10px 12px}
+.q-btn{display:block;width:100%;text-align:left;padding:9px 11px;margin-bottom:5px;border-radius:6px;border:1px solid #e8e6df;background:#fafaf8;color:#2d2d2b;font-size:12px;cursor:pointer;font-family:Georgia,serif;line-height:1.4;transition:all .12s}
+.q-btn:hover{background:#f0ede6;border-color:#c8c5be}
+.q-btn:disabled{opacity:.5;cursor:not-allowed}
+.sb-hint{padding:14px 16px;color:#888780;font-size:12px;line-height:1.6;font-family:-apple-system,sans-serif}
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.messages{flex:1;overflow-y:auto;padding:24px 28px}
+.messages::-webkit-scrollbar{width:5px}
+.messages::-webkit-scrollbar-thumb{background:#d3d1c7;border-radius:3px}
+.welcome{max-width:560px;margin:32px auto;text-align:center}
+.welcome h2{font-size:26px;color:#1a2744;margin-bottom:10px;font-weight:700}
+.welcome p{font-size:14px;color:#5f5e5a;line-height:1.7;font-family:-apple-system,sans-serif}
+.topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px}
+.topic-card{padding:14px;border-radius:8px;cursor:pointer;text-align:left;border:1px solid;transition:all .12s}
+.topic-card:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.msg-row{display:flex;margin-bottom:18px}
+.msg-row.user{justify-content:flex-end}
+.ai-avatar{width:28px;height:28px;border-radius:6px;background:#1a2744;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-right:10px;margin-top:2px}
+.bubble{max-width:72%;padding:11px 15px;font-size:14px;line-height:1.65;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.bubble.user{background:#1a2744;color:#fff;border-radius:14px 3px 14px 14px;font-family:-apple-system,sans-serif}
+.bubble.ai{background:#fff;color:#2d2d2b;border-radius:3px 14px 14px 14px;border:1px solid #e0ddd6;font-family:-apple-system,sans-serif}
+.b-head{font-weight:600;margin-top:8px;color:#1a1a18}
+.b-head:first-child{margin-top:0}
+.b-item{padding-left:14px;margin-top:3px}
+.b-gap{height:6px}
+.typing-dots{display:flex;gap:5px;align-items:center;padding:4px 2px}
+.dot{width:7px;height:7px;border-radius:50%;background:#1a2744;opacity:.35;animation:dp 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+.input-area{padding:14px 28px 20px;background:#fff;border-top:1px solid #e0ddd6;flex-shrink:0}
+.new-btn{font-size:12px;color:#888780;background:none;border:none;cursor:pointer;margin-bottom:8px;padding:0;font-family:inherit}
+.new-btn:hover{color:#1a2744}
+.input-row{display:flex;gap:8px}
+.input-box{flex:1;padding:11px 15px;border-radius:10px;border:1.5px solid #d3d1c7;font-size:14px;font-family:Georgia,serif;resize:none;outline:none;background:#fafaf8;color:#1a1a18;line-height:1.5;transition:border-color .15s}
+.input-box:focus{border-color:#1a2744}
+.send-btn{padding:11px 18px;border-radius:10px;border:none;background:#1a2744;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s}
+.send-btn:hover:not(:disabled){background:#243660}
+.send-btn:disabled{background:#c8c5be;cursor:not-allowed}
+.inp-hint{font-size:11px;color:#aaa9a2;margin-top:7px;text-align:center;font-family:-apple-system,sans-serif}
+/* API key modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:12px;padding:28px 32px;width:420px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal h3{font-size:17px;color:#1a2744;margin-bottom:8px}
+.modal p{font-size:13px;color:#5f5e5a;line-height:1.6;margin-bottom:18px;font-family:-apple-system,sans-serif}
+.modal input{width:100%;padding:10px 13px;border-radius:8px;border:1.5px solid #d3d1c7;font-size:13px;font-family:monospace;outline:none;margin-bottom:14px;transition:border-color .15s}
+.modal input:focus{border-color:#1a2744}
+.modal-btn{width:100%;padding:11px;border-radius:8px;border:none;background:#1a2744;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.modal-btn:hover{background:#243660}
+.modal-note{font-size:11px;color:#aaa9a2;margin-top:10px;text-align:center;font-family:-apple-system,sans-serif}
+</style>
+</head>
+<body>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Enter your Anthropic API Key</h3>
+    <p>Your key is used only in this browser session and never stored or transmitted anywhere except directly to Anthropic's API.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+    <button class="modal-btn" onclick="submitKey()">Start Demo →</button>
+    <div class="modal-note">Key stays in memory only — closes with the tab.</div>
+  </div>
+</div>
+
+<div class="header">
+  <div style="display:flex;align-items:center">
+    <div class="logo">RC</div>
+    <div>
+      <div class="hdr-title">Rose City Physicians Group</div>
+      <div class="hdr-sub">Analytics Intelligence Platform &nbsp;·&nbsp; 2022–2024</div>
+    </div>
+  </div>
+  <div class="pill loading" id="status-pill">● Loading Data...</div>
+</div>
+<div class="body">
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-lbl">Suggested Questions</div>
+      <button class="cat-btn" data-cat="referral" onclick="toggleCat('referral','#C04828',this)">Referral Leakage</button>
+      <button class="cat-btn" data-cat="scheduling" onclick="toggleCat('scheduling','#185FA5',this)">Scheduling &amp; Access</button>
+      <button class="cat-btn" data-cat="productivity" onclick="toggleCat('productivity','#085041',this)">Encounters &amp; Productivity</button>
+      <button class="cat-btn" data-cat="financial" onclick="toggleCat('financial','#6B3FA0',this)">Revenue &amp; Denials</button>
+    </div>
+    <div id="q-container"></div>
+    <div class="sb-hint" id="sb-hint">Select a category to browse questions, or type your own.</div>
+  </div>
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <h2>What would you like to know?</h2>
+        <p>Ask any question about referral patterns, scheduling, provider productivity, or financial performance. Select a category on the left to browse suggested questions.</p>
+        <div class="topic-grid">
+          <div class="topic-card" style="border-color:#C0482830;background:#C0482808" onclick="toggleCat('referral','#C04828',document.querySelector('[data-cat=referral]'))">
+            <div style="font-size:13px;font-weight:600;color:#C04828">Referral Leakage</div>
+            <div style="font-size:11px;color:#888780;margin-top:3px;font-family:-apple-system,sans-serif">Revenue at risk, external patterns</div>
+          </div>
+          <div class="topic-card" style="border-color:#185FA530;background:#185FA508" onclick="toggleCat('scheduling','#185FA5',document.querySelector('[data-cat=scheduling]'))">
+            <div style="font-size:13px;font-weight:600;color:#185FA5">Scheduling &amp; Access</div>
+            <div style="font-size:11px;color:#888780;margin-top:3px;font-family:-apple-system,sans-serif">Wait times, no-shows, access</div>
+          </div>
+          <div class="topic-card" style="border-color:#08504130;background:#08504108" onclick="toggleCat('productivity','#085041',document.querySelector('[data-cat=productivity]'))">
+            <div style="font-size:13px;font-weight:600;color:#085041">Encounters &amp; Productivity</div>
+            <div style="font-size:11px;color:#888780;margin-top:3px;font-family:-apple-system,sans-serif">wRVU, encounters, providers</div>
+          </div>
+          <div class="topic-card" style="border-color:#6B3FA030;background:#6B3FA008" onclick="toggleCat('financial','#6B3FA0',document.querySelector('[data-cat=financial]'))">
+            <div style="font-size:13px;font-weight:600;color:#6B3FA0">Revenue &amp; Denials</div>
+            <div style="font-size:11px;color:#888780;margin-top:3px;font-family:-apple-system,sans-serif">Collections, denials, AR aging</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <button class="new-btn" id="new-btn" style="display:none" onclick="newConv()">← New conversation</button>
+      <div class="input-row">
+        <textarea class="input-box" id="inp" rows="1" placeholder="Ask a question about the data..." onkeydown="onKey(event)" disabled></textarea>
+        <button class="send-btn" id="send" onclick="doSend()" disabled>Ask →</button>
+      </div>
+      <div class="inp-hint">Press Enter to send &nbsp;·&nbsp; Shift+Enter for new line</div>
+    </div>
+  </div>
+</div>
+<script>
+// ─── Table router: maps question keywords → relevant tables ──────────────────
+// Returns only the tables needed for a given question, keeping token count low.
+const TABLE_GROUPS = {
+  referral: {
+    tables: ["fact_referral","dim_referral_destination","dim_specialty","dim_provider","dim_payer","dim_location"],
+    keywords: ["referral","leakage","external","leak","network","competitor","revenue at risk","referred","sending out","specialty requested","in-network","out-of-network"]
+  },
+  scheduling: {
+    tables: ["fact_appointment","dim_specialty","dim_provider","dim_location","dim_patient"],
+    keywords: ["appointment","schedule","wait","access","no-show","no show","cancel","cancellation","book","booking","new patient","days out","slot","availability"]
+  },
+  productivity: {
+    tables: ["fact_encounter","dim_provider","dim_specialty","dim_location","dim_service_line","dim_payer","dim_patient"],
+    keywords: ["encounter","wrvu","wRVU","productivity","provider","volume","charge","cpt","patient volume","service line","payer mix","telehealth","procedure","surgery","office visit"]
+  },
+  financial: {
+    tables: ["fact_claim_month","fact_denial_month","fact_ar_month","dim_payer","dim_location","dim_denial_reason"],
+    keywords: ["revenue","collection","paid","denial","denied","ar ","accounts receivable","aging","days in ar","write-off","allowed","claim","billing","payment","collected","cash"]
+  }
+};
+
+// Always include these lightweight dims regardless of topic
+const BASE_TABLES = ["dim_location","dim_specialty","dim_payer"];
+
+function routeQuestion(question) {
+  const q = question.toLowerCase();
+  const matched = new Set(BASE_TABLES);
+  for (const [, group] of Object.entries(TABLE_GROUPS)) {
+    if (group.keywords.some(k => q.includes(k))) {
+      group.tables.forEach(t => matched.add(t));
+    }
+  }
+  // If nothing matched beyond base dims, include everything (fallback)
+  if (matched.size <= BASE_TABLES.length) {
+    Object.values(TABLE_GROUPS).forEach(g => g.tables.forEach(t => matched.add(t)));
+  }
+  return matched;
+}
+
+function buildContextPayload(question, db, dict) {
+  const relevantTables = routeQuestion(question);
+
+  // Slice only needed tables from the database
+  const dbSlice = {};
+  for (const tbl of relevantTables) {
+    if (db[tbl]) dbSlice[tbl] = db[tbl];
+  }
+
+  // Slice only relevant dictionary entries
+  const dictSlice = dict.filter(entry => relevantTables.has(entry.table));
+
+  return { dbSlice, dictSlice, tableList: [...relevantTables] };
+}
+
+const SYSTEM_BASE = `You are an AI analytics assistant for a multi-specialty physician group in Portland, Oregon. You have access to a healthcare analytics dataset covering 2022–2024.
+
+FULL SCHEMA (all tables):
+dim_specialty(specialty_id, specialty_name — 31 specialties)
+dim_service_line(service_line_id, service_line_name)
+dim_location(location_id, location_name, city, region, clinic_type, is_hospital_based — 53 locations)
+dim_payer(payer_id, payer_name, payer_category, allowed_multiplier — 17 payers)
+dim_denial_reason(denial_reason_id, denial_reason)
+dim_referral_destination(destination_id, organization_name, specialty, in_network_flag, competitor_flag, city)
+dim_provider(npi, provider_name, specialty_id, credential, fte, is_active, hire_date, primary_location_id, tenure_bucket — 287 providers)
+dim_patient(patient_id, age_band, gender, zip_code, first_visit_date, primary_payer_id)
+fact_encounter(encounter_id, service_date, patient_id, npi, location_id, specialty_id, service_line_id, payer_id, encounter_type, cpt_code, units, wrvu, charge_amount — 5,000 rows)
+fact_referral(referral_id, encounter_id, patient_id, referral_date, referring_npi, referring_provider, location_id, payer_id, specialty_requested, destination_id, referral_status, is_external[1=leakage], in_network_flag, revenue_at_risk, referring_provider_specialty — 5,000 rows)
+fact_appointment(appointment_id, patient_id, npi, location_id, specialty_id, appointment_date, booking_date, scheduled_days_out, appointment_type, status, no_show_flag, cancel_flag, new_patient_flag — 5,000 rows)
+fact_claim_month(month, payer_id, location_id, claims, charge_amount, allowed_amount, net_allowed_after_denial, paid_amount_total — monthly grain)
+fact_denial_month(month, payer_id, location_id, denial_reason_id, claims, denied_claims, denied_amount, allowed_amount — monthly grain)
+fact_ar_month(snapshot_month, payer_id, location_id, open_ar_amount, avg_ar_days, ar_0_30, ar_31_60, ar_61_90, ar_91_plus — monthly grain)
+
+KEY JOINS: fact_encounter.npi → dim_provider.npi | fact_encounter.specialty_id → dim_specialty.specialty_id | fact_referral.destination_id → dim_referral_destination.destination_id | fact_referral.is_external=1 means leakage
+
+LIMITATIONS: Financial tables are monthly grain only — no daily or weekly financials. No ICD codes, cost, margin, satisfaction, or compensation data. fact_appointment and fact_encounter are not row-level joinable by design. Data covers 2022–2024 only.
+
+RULES: Query the actual data provided and cite specific numbers. Lead with the direct answer. Use $ for currency, % for rates, commas in numbers. Be concise and executive-friendly. If data is unavailable state exactly what is missing and what you can answer instead. Do not refer to this as synthetic or demo data.`;
+const DATA_URL = "https://raw.githubusercontent.com/alexdoster/toc-demo/refs/heads/main/toc_demo_data.json";
+const DICT_URL = "https://raw.githubusercontent.com/alexdoster/toc-demo/refs/heads/main/toc_data_dictionary.json";
+const QUESTIONS = {
+  referral:["Which specialty has the highest referral leakage rate?","What is our total estimated revenue at risk from external referrals?","Which external organizations are receiving the most of our referrals?","How has our external referral rate trended over the past 3 years?","Which referring providers are sending the most patients outside our network?","What is the leakage rate broken down by payer?"],
+  scheduling:["Which specialty has the longest average wait time to get an appointment?","What is our overall no-show rate and which specialty is worst?","How many new patient appointments did we have in 2024?","Which locations have the highest cancellation rates?","What is the average days out patients are booking appointments?","Which day of the week has the most appointments scheduled?"],
+  productivity:["Who are our top 10 providers by encounter volume?","Which specialty generates the most wRVU?","How does patient volume compare year over year?","What is the payer mix breakdown across all encounters?","Which service line has the highest average charge per encounter?","Which locations see the most patient volume?"],
+  financial:["What is our total paid collections and how does it trend by month?","Which payer has the highest denial rate?","What are the most common denial reasons?","What is our average days in AR and how has it changed?","How much AR is sitting beyond 90 days?","Which location has the highest net allowed amount?"]
+};
+
+let msgs=[], loading=false, activeCat=null, DB=null, DICT=[], API_KEY=null;
+
+Promise.all([
+  fetch(DATA_URL).then(r => r.json()),
+  fetch(DICT_URL).then(r => r.json())
+]).then(([data, dict]) => {
+  data._meta && delete data._meta;
+  DB = data;
+  DICT = Array.isArray(dict) ? dict : [];
+  const pill = document.getElementById("status-pill");
+  pill.textContent = "● Data Ready";
+  pill.className = "pill ready";
+  if(API_KEY) enableInputs();
+}).catch(() => {
+  const pill = document.getElementById("status-pill");
+  pill.textContent = "● Data Error";
+  pill.style.background = "#8B1A1A";
+});
+
+function submitKey() {
+  const k = document.getElementById("api-key-input").value.trim();
+  if(!k.startsWith("sk-")) { alert("Please enter a valid Anthropic API key (starts with sk-)"); return; }
+  API_KEY = k;
+  document.getElementById("modal").style.display = "none";
+  if(DB) enableInputs();
+  else {
+    const check = setInterval(() => { if(DB) { enableInputs(); clearInterval(check); } }, 200);
+  }
+}
+
+function enableInputs() {
+  document.getElementById("inp").disabled = false;
+  document.getElementById("send").disabled = false;
+  document.getElementById("inp").focus();
+}
+
+function toggleCat(cat,color,btn){
+  document.querySelectorAll(".cat-btn").forEach(b=>{b.style.borderColor="";b.style.background="";b.style.color="";b.style.fontWeight="";});
+  if(activeCat===cat){activeCat=null;document.getElementById("q-container").innerHTML="";document.getElementById("sb-hint").style.display="block";return;}
+  activeCat=cat;
+  btn.style.borderColor=color;btn.style.background=color+"14";btn.style.color=color;btn.style.fontWeight="600";
+  document.getElementById("sb-hint").style.display="none";
+  document.getElementById("q-container").innerHTML='<div class="q-list">'+QUESTIONS[cat].map(q=>`<button class="q-btn" onclick="ask(this)"${loading?" disabled":""}>${q}</button>`).join("")+"</div>";
+}
+function ask(btn){send(btn.textContent);}
+function onKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();doSend();}}
+function doSend(){const v=document.getElementById("inp").value.trim();if(v)send(v);}
+function newConv(){msgs=[];document.getElementById("messages").innerHTML='<div class="welcome" id="welcome"><h2>What would you like to know?</h2><p>Ask any question about referral patterns, scheduling, provider productivity, or financial performance.</p></div>';document.getElementById("new-btn").style.display="none";}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function fmt(t){return t.split("\n").map(l=>{if(/^\*\*(.+)\*\*$/.test(l))return`<div class="b-head">${esc(l.slice(2,-2))}</div>`;if(/^\d+\./.test(l)||l.startsWith("- ")||l.startsWith("• "))return`<div class="b-item">${esc(l)}</div>`;if(l.trim()==="")return`<div class="b-gap"></div>`;return`<div>${esc(l)}</div>`;}).join("");}
+function addMsg(role,content){
+  const w=document.getElementById("welcome");if(w)w.remove();
+  document.getElementById("new-btn").style.display="block";
+  const c=document.getElementById("messages");
+  const row=document.createElement("div");row.className=`msg-row ${role}`;
+  if(role==="user"){row.innerHTML=`<div class="bubble user">${esc(content)}</div>`;}
+  else{row.innerHTML=`<div class="ai-avatar">AI</div><div class="bubble ai">${fmt(content)}</div>`;}
+  c.appendChild(row);c.scrollTop=c.scrollHeight;
+}
+function showTyping(){
+  const w=document.getElementById("welcome");if(w)w.remove();
+  const c=document.getElementById("messages");
+  const row=document.createElement("div");row.className="msg-row";row.id="typing";
+  row.innerHTML=`<div class="ai-avatar">AI</div><div class="bubble ai"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  c.appendChild(row);c.scrollTop=c.scrollHeight;
+}
+function rmTyping(){const t=document.getElementById("typing");if(t)t.remove();}
+function setDis(v){document.getElementById("inp").disabled=v;document.getElementById("send").disabled=v;document.querySelectorAll(".q-btn").forEach(b=>b.disabled=v);}
+async function send(text){
+  if(!text||loading||!DB||!API_KEY)return;
+  loading=true;setDis(true);
+  msgs.push({role:"user",content:text});
+  addMsg("user",text);
+  document.getElementById("inp").value="";
+  showTyping();
+  try{
+    // Route question to relevant tables only — reduces tokens ~90%
+    const { dbSlice, dictSlice } = buildContextPayload(text, DB, DICT);
+
+    // Build a concise, targeted system prompt for this specific question
+    const dictBlock = dictSlice.length > 0
+      ? "\n\nDATA DICTIONARY (relevant fields):\n" + dictSlice.map(e =>
+          `${e.table}.${e.column} [${e.type}]: ${e.definition}${e.notes ? " Note: "+e.notes : ""}`
+        ).join("\n")
+      : "";
+
+    const systemPrompt = SYSTEM_BASE + dictBlock + "\n\nDATA:\n" + JSON.stringify(dbSlice);
+
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:systemPrompt,
+        messages:msgs.map(m=>({role:m.role,content:m.content}))
+      })
+    });
+    const d=await res.json();
+    const reply=d.content?.[0]?.text||(d.error?.message)||"No response received.";
+    rmTyping();msgs.push({role:"assistant",content:reply});addMsg("assistant",reply);
+  }catch(e){
+    rmTyping();
+    const err="There was an error connecting to the AI. Please try again.";
+    msgs.push({role:"assistant",content:err});addMsg("assistant",err);
+  }
+  loading=false;setDis(false);
+  document.getElementById("inp").focus();
+  document.querySelectorAll(".q-btn").forEach(b=>b.disabled=false);
+}
+</script>
+</body>
+</html>
