@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rose City Physicians Group — Analytics Intelligence</title>
@@ -59,7 +59,6 @@ body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh
 .send-btn:hover:not(:disabled){background:#243660}
 .send-btn:disabled{background:#c8c5be;cursor:not-allowed}
 .inp-hint{font-size:11px;color:#aaa9a2;margin-top:7px;text-align:center;font-family:-apple-system,sans-serif}
-/* API key modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:#fff;border-radius:12px;padding:28px 32px;width:420px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
 .modal h3{font-size:17px;color:#1a2744;margin-bottom:8px}
@@ -78,7 +77,7 @@ body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh
   <div class="modal">
     <h3>Enter your Anthropic API Key</h3>
     <p>Your key is used only in this browser session and never stored or transmitted anywhere except directly to Anthropic's API.</p>
-    <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+    <input type="password" id="api-key-input" placeholder="sk-ant-...">
     <button class="modal-btn" onclick="submitKey()">Start Demo →</button>
     <div class="modal-note">Key stays in memory only — closes with the tab.</div>
   </div>
@@ -92,8 +91,9 @@ body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh
       <div class="hdr-sub">Analytics Intelligence Platform &nbsp;·&nbsp; 2022–2024</div>
     </div>
   </div>
-  <div class="pill loading" id="status-pill">● Loading Data...</div>
+  <div class="pill ready" id="status-pill">● Data Ready</div>
 </div>
+
 <div class="body">
   <div class="sidebar">
     <div class="sb-head">
@@ -106,11 +106,14 @@ body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh
     <div id="q-container"></div>
     <div class="sb-hint" id="sb-hint">Select a category to browse questions, or type your own.</div>
   </div>
+
   <div class="chat-area">
     <div class="messages" id="messages">
       <div class="welcome" id="welcome">
         <h2>What would you like to know?</h2>
-        <p>Ask any question about referral patterns, scheduling, provider productivity, or financial performance. Select a category on the left to browse suggested questions.</p>
+        <p>Ask any question about referral patterns, scheduling, 
+provider productivity, or financial performance. Select a category on 
+the left to browse suggested questions.</p>
         <div class="topic-grid">
           <div class="topic-card" style="border-color:#C0482830;background:#C0482808" onclick="toggleCat('referral','#C04828',document.querySelector('[data-cat=referral]'))">
             <div style="font-size:13px;font-weight:600;color:#C04828">Referral Leakage</div>
@@ -131,19 +134,19 @@ body{font-family:Georgia,'Times New Roman',serif;background:#f7f6f3;height:100vh
         </div>
       </div>
     </div>
+
     <div class="input-area">
       <button class="new-btn" id="new-btn" style="display:none" onclick="newConv()">← New conversation</button>
       <div class="input-row">
-        <textarea class="input-box" id="inp" rows="1" placeholder="Ask a question about the data..." onkeydown="onKey(event)" disabled></textarea>
-        <button class="send-btn" id="send" onclick="doSend()" disabled>Ask →</button>
+        <textarea class="input-box" id="inp" rows="1" placeholder="Ask a question about the data..." onkeydown="onKey(event)" disabled="disabled"></textarea>
+        <button class="send-btn" id="send" onclick="doSend()" disabled="disabled">Ask →</button>
       </div>
       <div class="inp-hint">Press Enter to send &nbsp;·&nbsp; Shift+Enter for new line</div>
     </div>
   </div>
 </div>
+
 <script>
-// ─── Table router: maps question keywords → relevant tables ──────────────────
-// Returns only the tables needed for a given question, keeping token count low.
 const TABLE_GROUPS = {
   referral: {
     tables: ["fact_referral","dim_referral_destination","dim_specialty","dim_provider","dim_payer","dim_location"],
@@ -163,7 +166,6 @@ const TABLE_GROUPS = {
   }
 };
 
-// Always include these lightweight dims regardless of topic
 const BASE_TABLES = ["dim_location","dim_specialty","dim_payer"];
 
 function routeQuestion(question) {
@@ -174,7 +176,6 @@ function routeQuestion(question) {
       group.tables.forEach(t => matched.add(t));
     }
   }
-  // If nothing matched beyond base dims, include everything (fallback)
   if (matched.size <= BASE_TABLES.length) {
     Object.values(TABLE_GROUPS).forEach(g => g.tables.forEach(t => matched.add(t)));
   }
@@ -183,16 +184,11 @@ function routeQuestion(question) {
 
 function buildContextPayload(question, db, dict) {
   const relevantTables = routeQuestion(question);
-
-  // Slice only needed tables from the database
   const dbSlice = {};
   for (const tbl of relevantTables) {
     if (db[tbl]) dbSlice[tbl] = db[tbl];
   }
-
-  // Slice only relevant dictionary entries
   const dictSlice = dict.filter(entry => relevantTables.has(entry.table));
-
   return { dbSlice, dictSlice, tableList: [...relevantTables] };
 }
 
@@ -219,8 +215,10 @@ KEY JOINS: fact_encounter.npi → dim_provider.npi | fact_encounter.specialty_id
 LIMITATIONS: Financial tables are monthly grain only — no daily or weekly financials. No ICD codes, cost, margin, satisfaction, or compensation data. fact_appointment and fact_encounter are not row-level joinable by design. Data covers 2022–2024 only.
 
 RULES: Query the actual data provided and cite specific numbers. Lead with the direct answer. Use $ for currency, % for rates, commas in numbers. Be concise and executive-friendly. If data is unavailable state exactly what is missing and what you can answer instead. Do not refer to this as synthetic or demo data.`;
+
 const DATA_URL = "https://raw.githubusercontent.com/alexdoster/toc-demo/refs/heads/main/toc_demo_data.json";
 const DICT_URL = "https://raw.githubusercontent.com/alexdoster/toc-demo/refs/heads/main/toc_data_dictionary.json";
+
 const QUESTIONS = {
   referral:["Which specialty has the highest referral leakage rate?","What is our total estimated revenue at risk from external referrals?","Which external organizations are receiving the most of our referrals?","How has our external referral rate trended over the past 3 years?","Which referring providers are sending the most patients outside our network?","What is the leakage rate broken down by payer?"],
   scheduling:["Which specialty has the longest average wait time to get an appointment?","What is our overall no-show rate and which specialty is worst?","How many new patient appointments did we have in 2024?","Which locations have the highest cancellation rates?","What is the average days out patients are booking appointments?","Which day of the week has the most appointments scheduled?"],
@@ -241,7 +239,8 @@ Promise.all([
   pill.textContent = "● Data Ready";
   pill.className = "pill ready";
   if(API_KEY) enableInputs();
-}).catch(() => {
+}).catch(err => {
+  console.error("Data load error:", err);
   const pill = document.getElementById("status-pill");
   pill.textContent = "● Data Error";
   pill.style.background = "#8B1A1A";
@@ -272,12 +271,14 @@ function toggleCat(cat,color,btn){
   document.getElementById("sb-hint").style.display="none";
   document.getElementById("q-container").innerHTML='<div class="q-list">'+QUESTIONS[cat].map(q=>`<button class="q-btn" onclick="ask(this)"${loading?" disabled":""}>${q}</button>`).join("")+"</div>";
 }
+
 function ask(btn){send(btn.textContent);}
 function onKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();doSend();}}
 function doSend(){const v=document.getElementById("inp").value.trim();if(v)send(v);}
 function newConv(){msgs=[];document.getElementById("messages").innerHTML='<div class="welcome" id="welcome"><h2>What would you like to know?</h2><p>Ask any question about referral patterns, scheduling, provider productivity, or financial performance.</p></div>';document.getElementById("new-btn").style.display="none";}
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function fmt(t){return t.split("\n").map(l=>{if(/^\*\*(.+)\*\*$/.test(l))return`<div class="b-head">${esc(l.slice(2,-2))}</div>`;if(/^\d+\./.test(l)||l.startsWith("- ")||l.startsWith("• "))return`<div class="b-item">${esc(l)}</div>`;if(l.trim()==="")return`<div class="b-gap"></div>`;return`<div>${esc(l)}</div>`;}).join("");}
+
 function addMsg(role,content){
   const w=document.getElementById("welcome");if(w)w.remove();
   document.getElementById("new-btn").style.display="block";
@@ -287,6 +288,7 @@ function addMsg(role,content){
   else{row.innerHTML=`<div class="ai-avatar">AI</div><div class="bubble ai">${fmt(content)}</div>`;}
   c.appendChild(row);c.scrollTop=c.scrollHeight;
 }
+
 function showTyping(){
   const w=document.getElementById("welcome");if(w)w.remove();
   const c=document.getElementById("messages");
@@ -294,8 +296,10 @@ function showTyping(){
   row.innerHTML=`<div class="ai-avatar">AI</div><div class="bubble ai"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
   c.appendChild(row);c.scrollTop=c.scrollHeight;
 }
+
 function rmTyping(){const t=document.getElementById("typing");if(t)t.remove();}
 function setDis(v){document.getElementById("inp").disabled=v;document.getElementById("send").disabled=v;document.querySelectorAll(".q-btn").forEach(b=>b.disabled=v);}
+
 async function send(text){
   if(!text||loading||!DB||!API_KEY)return;
   loading=true;setDis(true);
@@ -303,11 +307,10 @@ async function send(text){
   addMsg("user",text);
   document.getElementById("inp").value="";
   showTyping();
+
   try{
-    // Route question to relevant tables only — reduces tokens ~90%
     const { dbSlice, dictSlice } = buildContextPayload(text, DB, DICT);
 
-    // Build a concise, targeted system prompt for this specific question
     const dictBlock = dictSlice.length > 0
       ? "\n\nDATA DICTIONARY (relevant fields):\n" + dictSlice.map(e =>
           `${e.table}.${e.column} [${e.type}]: ${e.definition}${e.notes ? " Note: "+e.notes : ""}`
@@ -316,28 +319,52 @@ async function send(text){
 
     const systemPrompt = SYSTEM_BASE + dictBlock + "\n\nDATA:\n" + JSON.stringify(dbSlice);
 
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        system:systemPrompt,
-        messages:msgs.map(m=>({role:m.role,content:m.content}))
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: msgs.map(m => ({role: m.role, content: m.content}))
       })
     });
-    const d=await res.json();
-    const reply=d.content?.[0]?.text||(d.error?.message)||"No response received.";
-    rmTyping();msgs.push({role:"assistant",content:reply});addMsg("assistant",reply);
-  }catch(e){
+
+    const d = await res.json();
+    console.log("API response:", JSON.stringify(d).slice(0, 300));
+
+    let reply;
+    if (d.content && d.content[0] && d.content[0].type === "text") {
+      reply = d.content[0].text;
+    } else if (d.error) {
+      reply = "API error: " + (d.error.message || JSON.stringify(d.error));
+    } else {
+      reply = "Unexpected response format. Check console for details.";
+      console.error("Full response:", d);
+    }
+
     rmTyping();
-    const err="There was an error connecting to the AI. Please try again.";
-    msgs.push({role:"assistant",content:err});addMsg("assistant",err);
+    msgs.push({role:"assistant",content:reply});
+    addMsg("assistant",reply);
+
+  } catch(e) {
+    console.error("Fetch error:", e);
+    rmTyping();
+    const err = "There was an error connecting to the AI. Please try again.";
+    msgs.push({role:"assistant",content:err});
+    addMsg("assistant",err);
   }
+
   loading=false;setDis(false);
   document.getElementById("inp").focus();
   document.querySelectorAll(".q-btn").forEach(b=>b.disabled=false);
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
