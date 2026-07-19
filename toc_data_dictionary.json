@@ -1,0 +1,274 @@
+[
+  {
+    "table": "fact_encounter",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "One row per patient encounter. Covers office, procedure, imaging, surgery, telehealth.",
+    "notes": "Date range 2022-2024. Demo dataset contains 5,000 sampled rows.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_referral",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "One row per referral order. A single encounter may generate multiple referrals.",
+    "notes": "is_external=1 indicates leakage. Referrals to affiliated independently owned practices may be inconsistently coded.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "One row per scheduled appointment. Not every appointment becomes an encounter and not every encounter had a prior appointment.",
+    "notes": "fact_appointment and fact_encounter are not joinable at row level by design.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_claim_month",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "Pre-aggregated monthly rollup of claim financials by payer and location.",
+    "notes": "Monthly grain only. Cannot answer daily or weekly financial questions.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_denial_month",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "Pre-aggregated monthly rollup of claim denials by payer, location, and denial reason.",
+    "notes": "Monthly grain only.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_ar_month",
+    "column": "TABLE_GRAIN",
+    "type": "grain",
+    "definition": "Month-end accounts receivable snapshot by payer and location with aging buckets.",
+    "notes": "Snapshot table -- each row represents AR state at month end, not a transaction.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_encounter",
+    "column": "service_date",
+    "type": "date",
+    "definition": "Date the clinical service was rendered.",
+    "notes": "Full date available -- day of week, month, year queries all supported.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_encounter",
+    "column": "patient_id",
+    "type": "fk",
+    "definition": "Links encounter to dim_patient. New patient = service_date within 30 days of first_visit_date.",
+    "notes": "Join to dim_patient to get demographics and first visit date.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_encounter",
+    "column": "wrvu",
+    "type": "measure",
+    "definition": "Work Relative Value Units. Measures clinical work and complexity. Primary productivity metric.",
+    "notes": "Does not reflect reimbursement. Always normalize by FTE when comparing providers. Do not compare raw wRVU across specialties without context.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_encounter",
+    "column": "charge_amount",
+    "type": "measure",
+    "definition": "Gross charge billed before adjustments or denials.",
+    "notes": "Not a revenue metric. Use fact_claim_month.paid_amount_total for actual collected revenue.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_encounter",
+    "column": "encounter_type",
+    "type": "dimension",
+    "definition": "Category of service: Office, Procedure, Imaging, Surgery, Telehealth.",
+    "notes": "Surgery and Procedure have significantly higher wRVU and charges. Filter carefully when comparing across types.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_referral",
+    "column": "is_external",
+    "type": "flag",
+    "definition": "1 = referral left the network (leakage). 0 = kept internal.",
+    "notes": "Leakage rate = SUM(is_external) / COUNT(referral_id). revenue_at_risk only populated when is_external=1.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_referral",
+    "column": "in_network_flag",
+    "type": "flag",
+    "definition": "1 = destination is contracted in-network. 0 = out of network.",
+    "notes": "External referral can still be in-network. Leakage and network compliance are related but not identical metrics.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_referral",
+    "column": "revenue_at_risk",
+    "type": "measure",
+    "definition": "Estimated revenue lost from referral leaving the network.",
+    "notes": "Only populated when is_external=1. Directional estimate based on average allowed amount for specialty. Not a precise financial projection.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_referral",
+    "column": "specialty_requested",
+    "type": "dimension",
+    "definition": "Clinical specialty the patient was referred to.",
+    "notes": "Primary field for leakage analysis by specialty.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_referral",
+    "column": "competitor_flag",
+    "type": "flag",
+    "definition": "Sourced from dim_referral_destination. 1 = destination is a direct competitor.",
+    "notes": "Competitor referrals are highest priority leakage. Non-competitor referrals may be clinically appropriate and not recoverable.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_referral",
+    "column": "referral_status",
+    "type": "dimension",
+    "definition": "Current status: Completed, Pending, Cancelled, No Show.",
+    "notes": "Focus leakage analysis on Completed referrals. Pending referrals represent future revenue at risk.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "scheduled_days_out",
+    "type": "measure",
+    "definition": "Days between booking date and appointment date. Primary access metric.",
+    "notes": "Benchmarks: primary care under 7 days, Rheumatology/Dermatology 30-40 days, Oncology under 7 days.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "no_show_flag",
+    "type": "flag",
+    "definition": "1 = patient did not attend and did not cancel in advance.",
+    "notes": "No-show rate = SUM(no_show_flag) / COUNT(appointment_id). Benchmark 5-8%. Above 10% indicates systemic issue.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "cancel_flag",
+    "type": "flag",
+    "definition": "1 = appointment cancelled in advance by patient or practice.",
+    "notes": "Mutually exclusive with no_show_flag. High cancellation with long scheduled_days_out suggests patients book too far out.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "new_patient_flag",
+    "type": "flag",
+    "definition": "1 = appointment within 30 days of patient first_visit_date. Approximates new patient visit.",
+    "notes": "Derived approximation. Transferred patients appear as new. True new-to-practice identification requires Epic registration data.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_appointment",
+    "column": "appointment_type",
+    "type": "dimension",
+    "definition": "Category: New Patient, Follow-Up, Procedure, Telehealth, Annual Wellness.",
+    "notes": "Track new patient volume separately from follow-up to assess practice growth.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "fact_claim_month",
+    "column": "paid_amount_total",
+    "type": "measure",
+    "definition": "Total cash collected after contractual adjustments, denials, and patient collections. This is net revenue.",
+    "notes": "Correct field for revenue analysis. Do not use charge_amount as a revenue metric.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_claim_month",
+    "column": "allowed_amount",
+    "type": "measure",
+    "definition": "Amount payer contractually agrees to pay before denials and patient responsibility.",
+    "notes": "Compare to paid_amount_total to assess collection efficiency.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_claim_month",
+    "column": "net_allowed_after_denial",
+    "type": "measure",
+    "definition": "Allowed amount minus denied portion.",
+    "notes": "Gap between this and paid_amount_total represents uncollected patient responsibility and write-offs.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_denial_month",
+    "column": "denied_claims",
+    "type": "measure",
+    "definition": "Count of claims denied by payer in the month.",
+    "notes": "Denial rate = denied_claims / claims. Benchmark under 5%. Medicaid typically 7-10%.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_denial_month",
+    "column": "denied_amount",
+    "type": "measure",
+    "definition": "Dollar value of denied claims.",
+    "notes": "Focus denial recovery on high-dollar reasons first.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_ar_month",
+    "column": "avg_ar_days",
+    "type": "measure",
+    "definition": "Weighted average days claims outstanding at month end.",
+    "notes": "Benchmark 30-45 days specialty practices. Above 50 days indicates collection issues.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "fact_ar_month",
+    "column": "ar_91_plus",
+    "type": "measure",
+    "definition": "AR outstanding more than 90 days at month end.",
+    "notes": "Best practice under 15% of total AR. Medicaid and Self Pay typically dominate this bucket.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "dim_patient",
+    "column": "first_visit_date",
+    "type": "date",
+    "definition": "Date of patient earliest encounter. Used to identify new patients.",
+    "notes": "Patients first seen before 2022 will not appear as new patients in this dataset.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "dim_provider",
+    "column": "fte",
+    "type": "measure",
+    "definition": "Full Time Equivalent. 1.0 = full time. Used to normalize productivity.",
+    "notes": "Always normalize wRVU by FTE when comparing providers.",
+    "owner": "Clinical Operations"
+  },
+  {
+    "table": "dim_payer",
+    "column": "payer_category",
+    "type": "dimension",
+    "definition": "High-level classification: Commercial, Medicare, Medicaid, Government, Self Pay, Other.",
+    "notes": "Self Pay and Charity have significantly lower collection rates than Commercial or Medicare.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "dim_referral_destination",
+    "column": "competitor_flag",
+    "type": "flag",
+    "definition": "1 = destination is a direct competitor. 0 = non-competitive.",
+    "notes": "Prioritize competitor leakage recovery. Non-competitor referrals may be clinically necessary.",
+    "owner": "Revenue Cycle"
+  },
+  {
+    "table": "dim_location",
+    "column": "region",
+    "type": "dimension",
+    "definition": "Geographic region: Central, West, East, South, North.",
+    "notes": "Central=inner Portland. West=Beaverton/Hillsboro. East=Gresham/Happy Valley. South=Tualatin/Lake Oswego. North=Vancouver WA.",
+    "owner": "Clinical Operations"
+  }
+]
